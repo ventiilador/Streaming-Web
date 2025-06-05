@@ -1,0 +1,43 @@
+# Entorno virtual
+venv/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de log y temporales
+*.log
+*.tmp
+*.swp
+*.bak
+
+# Archivos de configuración locales o sensibles
+.env
+.env.*
+
+# SQLite DB u otras BD locales (si se usan)
+*.sqlite3
+
+# Alembic cache
+alembic/versions/__pycache__/
+alembic/__pycache__/
+
+# Cache de FastAPI o similares
+*.db
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# PyCharm / VSCode / otros IDE
+.idea/
+.vscode/
+
+# Archivos generados por herramientas
+*.egg-info/
+dist/
+build/
+
+# Carpeta __pycache__ en cualquier lugar
+**/__pycache__/
