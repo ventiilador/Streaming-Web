@@ -1,3 +1,5 @@
+// This module fetch all the profile data
+
 const params = new URLSearchParams(window.location.search);
 let profile_username = params.get("user");
 

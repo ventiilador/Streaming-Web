@@ -6,6 +6,8 @@
     <title>StreamingWeb | Video</title>
     <link rel="stylesheet" href="static/css/home.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script defer src="static/js/loadNavBar.js"></script>
     <script src="static/js/video.js" defer></script>
 </head>
@@ -18,7 +20,11 @@
     </nav>
     <div id="video-container">
         <video id="video" src="" controls autoplay></video>
-        <p id="video-title"></p>
+        <div id="title-container">
+            <p id="video-title"></p>
+            <i class="bi bi-hand-thumbs-up" id="video-like-button"></i>
+            <i class="bi bi-hand-thumbs-down" id="video-dislike-button"></i>
+        </div>
         <div id="channel-box">
             <div id="channel-image"></div>
             <p id="channel-name"></p>
@@ -40,9 +46,8 @@
             <p id="comments-title">Comments</p>
             <div id="comment-input-box">
                 <div id="comment-input-profile-image"></div>
-                <input type="text" name="comment" id="comment-input" placeholder="Give your opinion">
+                <textarea name="comment" id="comment-input" placeholder="Give your opinion" rows="3" style="resize: vertical;"></textarea>
                 <button id="comment-send">Send</button>
-
             </div>
         </div>
     </div>

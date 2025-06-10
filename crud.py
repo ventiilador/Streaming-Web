@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_, desc, or_, asc, insert, delete, update
 from sqlalchemy.orm import selectinload
-from models import User, Video, Comment, user_comment_favorites
+from models import User, Video, Comment, user_comment_favorites, user_comment_hated, user_video_favorites, user_video_hated, user_subscriptions
 from auth import verify_password, hash_password
 from datetime import datetime
 
@@ -53,7 +53,7 @@ async def get_profile_data_by_username(db: AsyncSession, username: str):
         return data
     return {"error": "no data"}
 
-async def get_video_data_by_id(db: AsyncSession, video_id: int):
+async def get_video_data_by_id(db: AsyncSession, video_id: int, user_id: int):
     result = await db.execute(
         select(Video)
         .where(Video.id == video_id)
@@ -63,12 +63,51 @@ async def get_video_data_by_id(db: AsyncSession, video_id: int):
     )
     video = result.scalars().first()
 
+    result = await db.execute(
+        select(user_video_favorites).where(
+            and_(
+                user_video_favorites.c.user_id == user_id,
+                user_video_favorites.c.video_id == video_id
+            )
+        )
+    )
+    video_liked = result.fetchone()
+    liked = True if video_liked else False
+
+    result = await db.execute(
+        select(user_video_hated).where(
+            and_(
+                user_video_hated.c.user_id == user_id,
+                user_video_hated.c.video_id == video_id
+            )
+        )
+    )
+    video_disliked = result.fetchone()
+    disliked = True if video_disliked else False
+
+    result = await db.execute(
+        select(user_subscriptions).where(
+            and_(
+                user_subscriptions.c.user_id == user_id,
+                user_subscriptions.c.channel_id == video.owner_id
+            )
+        )
+    )
+
+    subscription = result.fetchone()
+    subscribed = True if subscription else False
+
     if video:
         return {
             "title": video.title,
             "description": video.description,
             "owner_id": video.owner.id,
             "owner_username": video.owner.username,
+            "likes": video.likes,
+            "dislikes": video.dislikes,
+            "liked": liked,
+            "disliked": disliked,
+            "subscribed": subscribed
         }
 
     return {"Error": "No data"}
@@ -82,28 +121,31 @@ async def comment(db: AsyncSession, user_id: int, video_id: int, content: str):
 
     return {"Success": "OK"}
 
-async def get_comments_by_likes(db: AsyncSession, user_id: int, video_id: int, offeset_value: int):
+async def get_comments(db: AsyncSession, user_id: int, video_id: int, offset_value: int, order_by="likes"):
+    if order_by == "likes":
+        ordering = desc(Comment.likes)
+    elif order_by == "recent":
+        ordering = desc(Comment.id)
+    elif order_by == "old":
+        ordering = asc(Comment.id)
+    else:
+        ordering = desc(Comment.likes)
+
     result = await db.execute(
         select(Comment)
         .options(selectinload(Comment.owner))
         .where(Comment.video_id == video_id)
-        .order_by(desc(Comment.likes))
-        .offset(offeset_value)
+        .order_by(ordering)
+        .offset(offset_value)
         .limit(30)
-        )
+    )
+
     comments = result.scalars().all()
     comments_data = []
+
     for comment in comments:
-        result = await db.execute(select(user_comment_favorites)
-            .where(
-                and_(
-                    user_comment_favorites.c.user_id == user_id,
-                    user_comment_favorites.c.comment_id == comment.id
-                )
-            )
-        )
-        result_obj = result.fetchone()
-        liked = True if result_obj else False
+        liked = bool(await check_if_liked_comment(db, user_id, comment.id))
+        disliked = bool(await check_if_disliked_comment(db, user_id, comment.id))
         comments_data.append({
             "id": comment.id,
             "content": comment.content,
@@ -112,97 +154,46 @@ async def get_comments_by_likes(db: AsyncSession, user_id: int, video_id: int, o
             "owner_id": comment.owner.id,
             "owner_username": comment.owner.username,
             "date": comment.date,
-            "liked": liked
+            "liked": liked,
+            "disliked": disliked
         })
-    
-    return {"comments": comments_data}
 
-async def get_comments_by_recent(db: AsyncSession, user_id: int, video_id: int, offeset_value: int):
-    result = await db.execute(
-        select(Comment)
-        .options(selectinload(Comment.owner))
-        .where(Comment.video_id == video_id)
-        .order_by(desc(Comment.id))
-        .offset(offeset_value)
-        .limit(30)
-        )
-    comments = result.scalars().all()
-    comments_data = []
-    for comment in comments:
-        result = await db.execute(select(user_comment_favorites)
-            .where(
-                and_(
-                    user_comment_favorites.c.user_id == user_id,
-                    user_comment_favorites.c.comment_id == comment.id
-                )
-            )
-        )
-        result_obj = result.fetchone()
-        liked = True if result_obj else False
-        comments_data.append({
-            "id": comment.id,
-            "content": comment.content,
-            "likes": comment.likes,
-            "dislikes": comment.dislikes,
-            "owner_id": comment.owner.id,
-            "owner_username": comment.owner.username,
-            "date": comment.date,
-            "liked": liked
-        })
-    
-    return {"comments": comments_data}
-
-async def get_comments_by_old(db: AsyncSession, user_id: int, video_id: int, offeset_value: int):
-    result = await db.execute(
-        select(Comment)
-        .options(selectinload(Comment.owner))
-        .where(Comment.video_id == video_id)
-        .order_by(asc(Comment.id))
-        .offset(offeset_value)
-        .limit(30)
-        )
-    comments = result.scalars().all()
-    comments_data = []
-    for comment in comments:
-        result = await db.execute(select(user_comment_favorites)
-            .where(
-                and_(
-                    user_comment_favorites.c.user_id == user_id,
-                    user_comment_favorites.c.comment_id == comment.id
-                )
-            )
-        )
-        result_obj = result.fetchone()
-        liked = True if result_obj else False
-        comments_data.append({
-            "id": comment.id,
-            "content": comment.content,
-            "likes": comment.likes,
-            "dislikes": comment.dislikes,
-            "owner_id": comment.owner.id,
-            "owner_username": comment.owner.username,
-            "date": comment.date,
-            "liked": liked
-        })
-    
     return {"comments": comments_data}
 
 
-async def like_unlike(db: AsyncSession, user_id: int, comment_id: int):
+async def check_if_liked_comment(db: AsyncSession, user_id: int, comment_id: int):
     result = await db.execute(
-        select(user_comment_favorites).where(
+    select(user_comment_favorites).where(
+        and_(
+            user_comment_favorites.c.user_id == user_id,
+            user_comment_favorites.c.comment_id == comment_id
+        )
+    )
+    )
+    return result.fetchone()
+
+async def check_if_disliked_comment(db: AsyncSession, user_id: int, comment_id: int):
+    result = await db.execute(
+    select(user_comment_hated).where(
+        and_(
+            user_comment_hated.c.user_id == user_id,
+            user_comment_hated.c.comment_id == comment_id
+        )
+    )
+    )
+    return result.fetchone()
+
+async def like_unlike_comment(db: AsyncSession, user_id: int, comment_id: int):
+
+    comment_liked = await check_if_liked_comment(db=db, user_id=user_id, comment_id=comment_id)
+    comment_disliked = await check_if_disliked_comment(db=db, user_id=user_id, comment_id=comment_id)
+
+    if comment_liked:
+        await db.execute(delete(user_comment_favorites).where(
             and_(
                 user_comment_favorites.c.user_id == user_id,
                 user_comment_favorites.c.comment_id == comment_id
             )
-        )
-    )
-    comment = result.fetchone()
-
-    if comment:
-        await db.execute(delete(user_comment_favorites).where(
-            user_comment_favorites.c.user_id == user_id,
-            user_comment_favorites.c.comment_id == comment_id
         ))
         await db.execute(
             update(Comment)
@@ -211,7 +202,8 @@ async def like_unlike(db: AsyncSession, user_id: int, comment_id: int):
         )
         await db.commit()
         return False
-    else:
+    
+    elif not comment_liked:
         await db.execute(insert(user_comment_favorites).values(
             user_id=user_id,
             comment_id=comment_id
@@ -221,6 +213,237 @@ async def like_unlike(db: AsyncSession, user_id: int, comment_id: int):
             .where(Comment.id == comment_id)
             .values(likes=Comment.likes + 1)
         )
+
+        if comment_disliked:
+            await db.execute(delete(user_comment_hated).where(
+                and_(
+                    user_comment_hated.c.user_id == user_id,
+                    user_comment_hated.c.comment_id == comment_id
+                )
+            ))
+
+            await db.execute(update(Comment)
+                .where(Comment.id == comment_id)
+                .values(dislikes=Comment.dislikes - 1)
+            )
+
         await db.commit()
         return True
     
+
+async def dislike_undislike_comment(db: AsyncSession, user_id: int, comment_id: int):
+    
+    comment_disliked = await check_if_disliked_comment(db=db, user_id=user_id, comment_id=comment_id)
+    comment_liked = await check_if_liked_comment(db=db, user_id=user_id, comment_id=comment_id)
+
+    if comment_disliked:
+        await db.execute(delete(user_comment_hated).where(
+            and_(
+                user_comment_hated.c.user_id == user_id,
+                user_comment_hated.c.comment_id == comment_id
+            )
+        ))
+        await db.execute(
+            update(Comment)
+            .where(Comment.id == comment_id)
+            .values(dislikes=Comment.dislikes - 1)
+        )
+        await db.commit()
+        return False
+    
+    elif not comment_disliked:
+        await db.execute(insert(user_comment_hated).values(
+            user_id=user_id,
+            comment_id=comment_id
+        ))
+        await db.execute(
+            update(Comment)
+            .where(Comment.id == comment_id)
+            .values(dislikes=Comment.dislikes + 1)
+        )
+
+        if comment_liked:
+            await db.execute(delete(user_comment_favorites).where(
+                and_(
+                    user_comment_favorites.c.user_id == user_id,
+                    user_comment_favorites.c.comment_id == comment_id
+                )
+            ))
+
+            await db.execute(update(Comment)
+                .where(Comment.id == comment_id)
+                .values(likes=Comment.likes - 1)
+            )
+
+        await db.commit()
+        return True
+
+
+async def check_if_liked_video(db: AsyncSession, user_id: int, video_id: int):
+    result = await db.execute(
+    select(user_video_favorites).where(
+        and_(
+            user_video_favorites.c.user_id == user_id,
+            user_video_favorites.c.video_id == video_id
+        )
+    )
+    )
+    return result.fetchone()
+
+async def check_if_disliked_video(db: AsyncSession, user_id: int, video_id: int):
+    result = await db.execute(
+    select(user_video_hated).where(
+        and_(
+            user_video_hated.c.user_id == user_id,
+            user_video_hated.c.video_id == video_id
+        )
+    )
+    )
+    return result.fetchone()
+
+async def like_unlike_video(db: AsyncSession, user_id: int, video_id: int):
+
+    video_liked = await check_if_liked_video(db=db, user_id=user_id, video_id=video_id)
+    video_disliked = await check_if_disliked_video(db=db, user_id=user_id, video_id = video_id)
+
+    if video_liked:
+        await db.execute(
+            delete(user_video_favorites).where(
+                and_(
+                    user_video_favorites.c.user_id == user_id,
+                    user_video_favorites.c.video_id == video_id
+                )
+            )
+        )
+        await db.execute(update(Video)
+            .where(Video.id == video_id)
+            .values(likes=Video.likes - 1)
+        )
+        await db.commit()
+        return False
+    
+    elif not video_liked:
+        await db.execute(insert(user_video_favorites)
+            .values(
+                user_id=user_id,
+                video_id=video_id
+            )
+        )
+        await db.execute(update(Video)
+            .where(Video.id == video_id)
+            .values(likes=Video.likes + 1)
+        )
+
+        if video_disliked:
+            await db.execute(delete(user_video_hated).where(
+                and_(
+                    user_video_hated.c.user_id == user_id,
+                    user_video_hated.c.video_id == video_id
+                )
+            ))
+            await db.execute(update(Video)
+                .where(Video.id == video_id)
+                .values(dislikes=Video.dislikes - 1)
+            )
+
+        await db.commit()
+        return True
+    
+
+async def dislike_undislike_video(db: AsyncSession, user_id: int, video_id: int):
+
+    video_disliked = await check_if_disliked_video(db=db, user_id=user_id, video_id = video_id)
+    video_liked = await check_if_liked_video(db=db, user_id=user_id, video_id=video_id)
+    
+    if video_disliked:
+        await db.execute(
+            delete(user_video_hated).where(
+                and_(
+                    user_video_hated.c.user_id == user_id,
+                    user_video_hated.c.video_id == video_id
+                )
+            )
+        )
+        await db.execute(update(Video)
+            .where(Video.id == video_id)
+            .values(dislikes=Video.dislikes - 1)
+        )
+        await db.commit()
+        return False
+    
+    elif not video_disliked:
+        await db.execute(insert(user_video_hated)
+            .values(
+                user_id=user_id,
+                video_id=video_id
+            )
+        )
+        await db.execute(update(Video)
+            .where(Video.id == video_id)
+            .values(dislikes=Video.dislikes + 1)
+        )
+
+        if video_liked:
+            await db.execute(delete(user_video_favorites).where(
+                and_(
+                    user_video_favorites.c.user_id == user_id,
+                    user_video_favorites.c.video_id == video_id
+                )
+            ))
+            await db.execute(update(Video)
+                .where(Video.id == video_id)
+                .values(likes=Video.likes - 1)
+            )
+
+        await db.commit()
+        return True
+    
+
+async def subscribe(db: AsyncSession, user_id: int, video_id: int):
+    
+    result = await db.execute(select(Video).where(Video.id == video_id))
+    video = result.scalars().first()
+
+    if not video:
+        return {"Error": "Video/Channel not found"}
+    
+    video_owner_id = video.owner_id
+
+    if video_owner_id == user_id:
+        return {"Error": "You cant subscribe yourself"}
+
+    result = await db.execute(select(user_subscriptions)
+        .where(and_(
+            user_subscriptions.c.user_id == user_id,
+            user_subscriptions.c.channel_id == video_owner_id
+        ))
+    )
+    
+    subscription = result.fetchone()
+
+    if subscription:
+        await db.execute(delete(user_subscriptions)
+            .where(and_(
+                user_subscriptions.c.user_id == user_id,
+                user_subscriptions.c.channel_id == video_owner_id
+            ))
+        )
+
+        await db.execute(update(User).where(User.id == video_owner_id)
+            .values(subscribers_count=User.subscribers_count - 1)
+        )
+
+        await db.commit()
+        return {"Success": "Dessubscribed successfully"}
+
+    await db.execute(insert(user_subscriptions)
+        .values(user_id=user_id, channel_id=video_owner_id)
+    )
+
+    await db.execute(update(User).where(User.id == video_owner_id)
+        .values(subscribers_count=User.subscribers_count + 1)
+    )
+
+    await db.commit()
+
+    return {"Success": "Subscribed successfully"}

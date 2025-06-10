@@ -1,3 +1,5 @@
+// we call this module to load the nav data
+
 let username;
 fetch("/API/home", {
     method: "GET",

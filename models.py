@@ -9,11 +9,32 @@ user_video_favorites = Table(
     Column("video_id", Integer, ForeignKey("videos.id"), primary_key=True)
 )
 
+user_video_hated = Table(
+    "user_video_hated",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("video_id", Integer, ForeignKey("videos.id"), primary_key=True)
+)
+
 user_comment_favorites = Table(
     "user_comment_favorites",
     Base.metadata,
     Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
     Column("comment_id", Integer, ForeignKey("comments.id"), primary_key=True)
+)
+
+user_comment_hated = Table(
+    "user_comment_hated",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("comment_id", Integer, ForeignKey("comments.id"), primary_key=True)
+)
+
+user_subscriptions = Table(
+    "user_subscriptions",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("channel_id", Integer, ForeignKey("users.id"), primary_key=True)
 )
 
 class User(Base):
@@ -23,9 +44,11 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    subscribers_count = Column(Integer, default=0, server_default="0", nullable=False)
 
     videos = relationship("Video", back_populates="owner", cascade="all, delete")
     comments = relationship("Comment", back_populates="owner", cascade="all, delete")
+
     favorite_videos = relationship(
         "Video",
         secondary=user_video_favorites,
@@ -37,6 +60,21 @@ class User(Base):
         back_populates="liked_by_users"
     )
 
+    subscriptions = relationship(
+        "User",
+        secondary=user_subscriptions,
+        primaryjoin=id==user_subscriptions.c.user_id,
+        secondaryjoin=id==user_subscriptions.c.channel_id,
+        back_populates="subscribers"
+    )
+
+    subscribers = relationship(
+        "User",
+        secondary=user_subscriptions,
+        primaryjoin=id==user_subscriptions.c.channel_id,
+        secondaryjoin=id==user_subscriptions.c.user_id,
+        back_populates="subscriptions"
+    )
 
 class Video(Base):
     __tablename__ = "videos"

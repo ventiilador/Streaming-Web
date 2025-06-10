@@ -143,7 +143,6 @@ a:hover{
 }
 
 #subscribe-button{
-    background-color: rgb(121, 31, 31);
     color: white;
     border: none;
     border-radius: 5px;
@@ -223,11 +222,11 @@ a:hover{
     white-space: normal;   
 }
 
-.comment-like-button{
+.bi-hand-thumbs-up{
     cursor: pointer;
 }
 
-.comment-dislike-button{
+.bi-hand-thumbs-down{
     cursor: pointer;
 }
 
@@ -266,4 +265,23 @@ a:hover{
 
 .like{
     color: green;
+}
+
+.dislike{
+    color: red;
+}
+
+#title-container{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    #video-container{
+        width: 90%;
+    }
+    #web-title{
+        font-size: 17px;
+    }
 }
