@@ -29,6 +29,7 @@ document.addEventListener("click", (e) => {
             break;
         case "dashboard":
             window.location.href = "/dashboard";
+            break;
         case "my-profile":
             window.location.href = `/profile?user=${username}`;
             break;
@@ -40,5 +41,6 @@ document.addEventListener("click", (e) => {
             break;
         default:
             dropdown.classList.remove("dropdown-active");
+            break;
     };
 });
