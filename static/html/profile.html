@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StreamingWeb | Profile</title>
-    <link rel="stylesheet" href="static/css/home.css">
+    <link rel="stylesheet" href="static/css/navbar.css">
+    <link rel="stylesheet" href="static/css/profile.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <script defer src="static/js/loadNavBar.js"></script>
+    <script defer src="static/js/navBar.js"></script>
     <script defer src="static/js/profile.js"></script>
 </head>
 <body>
@@ -14,12 +15,22 @@
         <h2 id="web-title">StreamingWeb</h2>
         <input type="text" name="search" id="search-input">
         <i class="bi bi-search" id="search-button"></i>
-        <div id="profile-picture"></div>
+        <div id="profile-picture">
+            <div class="dropdown" id="profile-dropdown">
+                <a id="dashboard">Dashboard</a>
+                <a id="my-profile">My Profile</a>
+                <a id="settings">Settings</a>
+                <a id="log-out">Log Out</a>
+            </div>
+        </div>
     </nav>
     <div id="profile-container">
         <div id="user-image"></div>
         <p id="username"></p>
+        <p id="subscribers"></p>
+        <button id="subscribe-button">Subscribe</button>
         <div id="videos-container"></div>
+        <p id="no-videos-found"></p>
     </div>
 </body>
 </html>

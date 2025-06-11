@@ -6,6 +6,7 @@ const commentsBox = document.getElementById("comments-box");
 const filterCombobox = document.getElementById("filter-combobox");
 const video_like_button = document.getElementById("video-like-button");
 const video_dislike_button = document.getElementById("video-dislike-button");
+const subscribe_button = document.getElementById("subscribe-button");
 let channel_name;
 
 // state variables
@@ -14,7 +15,7 @@ let isLoading = false;
 let commentsEnded = false;
 
 // We load the video from local storage (simulation)
-document.getElementById("video").src = `media/videos/${videoId}.mp4`;
+document.getElementById("video").src = `/video_stream/${videoId}`;
 
 // This function renders the comments
 function renderCommentForm() {
@@ -54,11 +55,10 @@ const get_video_data = () => {
     })
     .then(data => {
         document.getElementById("video-title").innerText = data.title;
-        document.getElementById("channel-image").style.backgroundImage = `url(media/profile_pictures/${data.owner_id}.jpg)`;
+        document.getElementById("channel-image").style.backgroundImage = `url(/profile_picture/${data.owner_id})`;
         channel_name = data.owner_username;
         document.getElementById("channel-name").innerText = channel_name;
         document.getElementById("description").innerText = data.description;
-        const subscribe_button = document.getElementById("subscribe-button");
         if (data.subscribed) {
             subscribe_button.innerText = "Subscribed";
             subscribe_button.style.backgroundColor = "#A9B0B3";
@@ -142,7 +142,7 @@ document.getElementById("channel-image").addEventListener("click", () => {
 
 // Here we manage the subscribe button
 document.getElementById("subscribe-button").addEventListener("click", () => {
-    fetch("/API/subscribe", {
+    fetch("/API/subscribe_by_video", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -300,7 +300,7 @@ const get_comments = (order) => {
             if (comment.liked) {
                 html += `
                 <div class="comment-container">
-                    <div class="user-image" style="background-image: url(media/profile_pictures/${comment.owner_id}.jpg)" data-username="${comment.owner_username}"></div>
+                    <div class="user-image" style="background-image: url(/profile_picture/${comment.owner_id})" data-username="${comment.owner_username}"></div>
                     <p class="user-username">${comment.owner_username}</p>
                     <p class="comment-text">${safeContent}</p>
                     <i class="bi bi-hand-thumbs-up comment-like-button like" data-id="${comment.id}">${comment.likes}</i>
@@ -310,7 +310,7 @@ const get_comments = (order) => {
             } else if (comment.disliked) {
                 html += `
                 <div class="comment-container">
-                    <div class="user-image" style="background-image: url(media/profile_pictures/${comment.owner_id}.jpg)" data-username="${comment.owner_username}"></div>
+                    <div class="user-image" style="background-image: url(/profile_picture/${comment.owner_id})" data-username="${comment.owner_username}"></div>
                     <p class="user-username">${comment.owner_username}</p>
                     <p class="comment-text">${safeContent}</p>
                     <i class="bi bi-hand-thumbs-up comment-like-button" data-id="${comment.id}">${comment.likes}</i>
@@ -322,7 +322,7 @@ const get_comments = (order) => {
             else {
                 html += `
                 <div class="comment-container">
-                    <div class="user-image" style="background-image: url(media/profile_pictures/${comment.owner_id}.jpg)" data-username="${comment.owner_username}"></div>
+                    <div class="user-image" style="background-image: url(/profile_picture/${comment.owner_id})" data-username="${comment.owner_username}"></div>
                     <p class="user-username">${comment.owner_username}</p>
                     <p class="comment-text">${safeContent}</p>
                     <i class="bi bi-hand-thumbs-up comment-like-button" data-id="${comment.id}">${comment.likes}</i>

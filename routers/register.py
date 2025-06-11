@@ -1,27 +1,32 @@
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Form, Depends
 from fastapi.responses import RedirectResponse, FileResponse
-from auth import verify_token, create_access_token
+from auth import create_access_token
 from schemas import RegisterForm
 from crud import register
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
+from functions import redirect_if_authenticated
 
 router = APIRouter()
 
 @router.get("/register")
-def get_register(request: Request):
-    token = request.cookies.get("session_token")
-    if token:
-        if verify_token(token=token):
-            return RedirectResponse("/home", status_code=302)
+def get_register(redirect=Depends(redirect_if_authenticated())):
+
+    if isinstance(redirect, RedirectResponse):
+        return redirect
+    
     return FileResponse("static/html/register.html")
 
 @router.post("/register")
-async def register_login(request: Request, username: str = Form(...), email: str = Form(...), password: str = Form(...), db: AsyncSession = Depends(get_db)):
-    token = request.cookies.get("session_token")
-    if token:
-        if verify_token(token=token):
-            return RedirectResponse("/home", status_code=302)
+async def register_login(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    redirect=Depends(redirect_if_authenticated())):
+    
+    if isinstance(redirect, RedirectResponse):
+        return redirect
     
     try:
         form = RegisterForm(username=username, email=email, password=password)
@@ -38,6 +43,7 @@ async def register_login(request: Request, username: str = Form(...), email: str
             "Pragma": "no-cache",
             "Expires": "0"
         })
+
         response.set_cookie(
             key="session_token",
             value=token,
@@ -45,4 +51,5 @@ async def register_login(request: Request, username: str = Form(...), email: str
             samesite="lax"
         )
         return response
+    
     return RedirectResponse("/register?error=2", status_code=302)

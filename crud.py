@@ -37,21 +37,36 @@ async def get_user_data_by_id(db: AsyncSession, id: int):
         return {"user_id": user.id, "username": user.username, "email": user.email}
     return None
 
-async def get_profile_data_by_username(db: AsyncSession, username: str):
+async def get_profile_data_by_username(db: AsyncSession, user_id: int, username: str):
     user_result = await db.execute(select(User).where(User.username == username))
     user = user_result.scalars().first()
+
+    if not user:
+        return {"error": "User not found"}
+
     videos_result = await db.execute(select(Video).where(Video.owner_id == user.id))
     videos = videos_result.scalars().all()
-    data = {}
 
-    if user:
-        data["user"] = {"id": user.id, "username": user.username}
-    if videos:
-        data["videos"] = videos
+    subscription_result = await db.execute(select(user_subscriptions).where(
+        and_(
+            user_subscriptions.c.user_id == user_id,
+            user_subscriptions.c.channel_id == user.id
+        )
+    ))
+    subscription = subscription_result.fetchone()
 
-    if user or videos:
-        return data
-    return {"error": "no data"}
+    subscribed = bool(subscription)
+
+    return {
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "subscribers": user.subscribers_count,
+            "subscribed": subscribed
+        },
+        "videos": videos
+    }
+
 
 async def get_video_data_by_id(db: AsyncSession, video_id: int, user_id: int):
     result = await db.execute(
@@ -72,7 +87,7 @@ async def get_video_data_by_id(db: AsyncSession, video_id: int, user_id: int):
         )
     )
     video_liked = result.fetchone()
-    liked = True if video_liked else False
+    liked = bool(video_liked)
 
     result = await db.execute(
         select(user_video_hated).where(
@@ -83,7 +98,7 @@ async def get_video_data_by_id(db: AsyncSession, video_id: int, user_id: int):
         )
     )
     video_disliked = result.fetchone()
-    disliked = True if video_disliked else False
+    disliked = bool(video_disliked)
 
     result = await db.execute(
         select(user_subscriptions).where(
@@ -95,7 +110,7 @@ async def get_video_data_by_id(db: AsyncSession, video_id: int, user_id: int):
     )
 
     subscription = result.fetchone()
-    subscribed = True if subscription else False
+    subscribed = bool(subscription)
 
     if video:
         return {
@@ -399,7 +414,7 @@ async def dislike_undislike_video(db: AsyncSession, user_id: int, video_id: int)
         return True
     
 
-async def subscribe(db: AsyncSession, user_id: int, video_id: int):
+async def subscribe_by_video(db: AsyncSession, user_id: int, video_id: int):
     
     result = await db.execute(select(Video).where(Video.id == video_id))
     video = result.scalars().first()
@@ -446,4 +461,56 @@ async def subscribe(db: AsyncSession, user_id: int, video_id: int):
 
     await db.commit()
 
+    return {"Success": "Subscribed successfully"}
+
+
+async def subscribe_by_username(db: AsyncSession, user_id: int, username: str):
+    print(user_id, username)
+
+    result = await db.execute(select(User).where(User.username == username))
+    channel = result.scalars().first()
+
+    if not channel:
+        return {"Error": "Channel not found"}
+
+    channel_id = channel.id
+
+    if user_id == channel_id:
+        return {"Error": "You can't subscribe to yourself"}
+
+    result = await db.execute(select(user_subscriptions)
+        .where(and_(
+            user_subscriptions.c.user_id == user_id,
+            user_subscriptions.c.channel_id == channel_id
+        ))
+    )
+
+    subscription = result.fetchone()
+
+    if subscription:
+        await db.execute(delete(user_subscriptions)
+            .where(and_(
+                user_subscriptions.c.user_id == user_id,
+                user_subscriptions.c.channel_id == channel_id
+            ))
+        )
+
+        await db.execute(update(User)
+            .where(User.id == channel_id)
+            .values(subscribers_count=User.subscribers_count - 1)
+        )
+
+        await db.commit()
+        return {"Success": "Unsubscribed successfully"}
+
+    await db.execute(insert(user_subscriptions)
+        .values(user_id=user_id, channel_id=channel_id)
+    )
+
+    await db.execute(update(User)
+        .where(User.id == channel_id)
+        .values(subscribers_count=User.subscribers_count + 1)
+    )
+
+    await db.commit()
     return {"Success": "Subscribed successfully"}

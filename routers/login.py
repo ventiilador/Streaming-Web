@@ -1,27 +1,31 @@
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Form, Depends
 from fastapi.responses import RedirectResponse, FileResponse
-from auth import verify_token, create_access_token
+from auth import create_access_token
 from schemas import LoginForm
 from crud import login
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
+from functions import redirect_if_authenticated
 
 router = APIRouter()
 
 @router.get("/login")
-def get_login(request: Request):
-    token = request.cookies.get("session_token")
-    if token:
-        if verify_token(token=token):
-            return RedirectResponse("/home", status_code=302)
+def get_login(redirect=Depends(redirect_if_authenticated())):
+
+    if isinstance(redirect, RedirectResponse):
+        return redirect
+    
     return FileResponse("static/html/login.html")
 
 @router.post("/login")
-async def post_login(request: Request, username: str = Form(...), password: str = Form(...), db: AsyncSession = Depends(get_db)):
-    token = request.cookies.get("session_token")
-    if token:
-        if verify_token(token=token):
-            return RedirectResponse("/home", status_code=302)
+async def post_login(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    redirect=Depends(redirect_if_authenticated())):
+
+    if isinstance(redirect, RedirectResponse):
+        return redirect
     
     try:
         form = LoginForm(username=username, password=password)
@@ -33,11 +37,7 @@ async def post_login(request: Request, username: str = Form(...), password: str 
 
     if user:
         token = create_access_token(user_id=user.id)
-        response = RedirectResponse("/home", status_code=302, headers={
-            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        })
+        response = RedirectResponse("/home", status_code=302)
         response.set_cookie(
             key="session_token",
             value=token,
@@ -45,4 +45,5 @@ async def post_login(request: Request, username: str = Form(...), password: str 
             samesite="lax"
         )
         return response
+    
     return RedirectResponse("/login?error=2", status_code=302)

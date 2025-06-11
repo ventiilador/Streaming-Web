@@ -1,0 +1,68 @@
+#profile-container{
+    padding: 20px;
+    margin: 20px auto;
+    width: 100%;
+    max-width: 800px;
+    background-color: #181818;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 15px;
+}
+
+#user-image{
+    width: 150px;
+    height: 150px;
+    border-radius: 100%;
+    background-color: black;
+    margin: auto;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+#username{
+    font-size: 20px;
+}
+
+#videos-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.video-card {
+    background-color: #202020;
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: last baseline;
+}
+
+.video-card-title{
+    width: 100%;
+    height: 30px;
+    display: flex;
+    padding: 0px 10px;
+    align-items: center;
+    background-color: black;
+}
+
+#subscribe-button{
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+#no-videos-found{
+    display: none;
+}

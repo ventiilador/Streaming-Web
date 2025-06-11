@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #0f0f0f;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+nav{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 20px;
+    min-height: 40px;
+    width: 100%;
+    background-color: #181818;
+    gap: 20px;
+}
+
+.dropdown {
+    position: absolute;
+    top: 75px;
+    left: 0px;
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+    min-width: 125px;
+}
+
+.dropdown a {
+    padding: 10px 15px;
+    text-decoration: none;
+    color: black;
+    display: block;
+}
+
+.dropdown a:hover {
+    background-color: #5f5f5f;
+}
+
+.dropdown-active{
+    display: block;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    color: #ffffff;
+}
+
+#web-title{
+    margin-left: 20px;
+    cursor: pointer;
+}
+
+#search-input{
+    width: 20%;
+    max-width: 250px;
+}
+
+#search-button{
+    cursor: pointer;
+}
+
+#profile-picture {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: black;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    position: relative;
+}
+
+@media (max-width: 768px) {
+    #video-container{
+        width: 90%;
+    }
+    #web-title{
+        font-size: 17px;
+    }
+    #profile-picture{
+        width: 30px;
+        height: 30px;
+    }
+}
