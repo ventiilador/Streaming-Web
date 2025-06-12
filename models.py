@@ -82,6 +82,8 @@ class Video(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    video_extension = Column(String, nullable=False)
+    miniature_extension = Column(String, nullable=False)
     likes = Column(Integer, default=0, server_default="0", nullable=False)
     dislikes = Column(Integer, default=0, server_default="0", nullable=False)
 

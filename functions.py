@@ -1,4 +1,4 @@
-from fastapi import Cookie, Request
+from fastapi import Cookie, Request, UploadFile
 from typing import Optional
 from fastapi.responses import RedirectResponse
 from auth import verify_token
@@ -33,3 +33,8 @@ def redirect_if_authenticated(redirect_to="/home"):
         
         return None
     return dependency
+
+async def save_upload_file(upload_file: UploadFile, destination_path: str):
+    with open(destination_path, "wb") as out_file:
+        content = await upload_file.read()
+        out_file.write(content)

@@ -24,8 +24,14 @@ def get_miniature(video_id: int, redirect=Depends(require_authenticated_user()))
 
     if isinstance(redirect, RedirectResponse):
         return redirect
-    
     image_path = SysPath(f"media/miniatures/{video_id}.jpg")
+
+    if image_path.exists():
+        # ARREGLAR LO DE DIFERENTES EXTENSIONES EN EL CODIGO
+        pass
+    else:
+        image_path = SysPath("media/miniatures/default.png")
+    
 
     return FileResponse(image_path, media_type="image/jpeg")
 

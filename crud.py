@@ -514,3 +514,22 @@ async def subscribe_by_username(db: AsyncSession, user_id: int, username: str):
 
     await db.commit()
     return {"Success": "Subscribed successfully"}
+
+async def upload_video(db: AsyncSession, user_id: int, title: str, description: str, video_extension: str, miniature_extension: str) -> Video:
+    new_video = Video(title=title, description=description, video_extension=video_extension, miniature_extension=miniature_extension, owner_id=user_id)
+    db.add(new_video)
+    try:
+        await db.commit()
+        await db.refresh(new_video)
+        return new_video
+    except Exception as e:
+        await db.rollback()
+        raise e
+
+async def get_miniature_extension_by_video_id(db: AsyncSession, video_id: int):
+    result = await db.execute(select(Video).where(Video.id == video_id))
+    video = result.scalars().first()
+
+    if video:
+        return video.miniature_extension
+    return False
