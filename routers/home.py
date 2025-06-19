@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, FileResponse
-from crud import get_user_data_by_id
+from crud import get_user_data_by_id, search_channels, search_videos, upload_video
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from functions import require_authenticated_user
+from schemas import SearchForm
 
 router = APIRouter()
 
@@ -12,7 +13,7 @@ def get_home(redirect=Depends(require_authenticated_user())):
 
     if isinstance(redirect, RedirectResponse):
         return redirect
-    
+
     return FileResponse(
         "static/html/home.html",
         headers={
@@ -32,3 +33,20 @@ async def get_home_data(db: AsyncSession = Depends(get_db), data=Depends(require
     if user_data:
         return user_data
     return {"error":"Error getting data"}
+
+@router.post("/search")
+async def post_search(
+    form: SearchForm = Depends(SearchForm.as_form),
+    data=Depends(require_authenticated_user()),
+    db: AsyncSession = Depends(get_db)
+    ):
+
+    if isinstance(data, RedirectResponse):
+        return data
+    
+    if form.type == "videos":
+        videos = await search_videos(db, form.search, form.filter, form.offset)
+        return {"videos": videos}
+    else:
+        channels = await search_channels(db, form.search, form.filter, form.offset)
+        return {"channels": channels}

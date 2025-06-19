@@ -80,6 +80,102 @@ a:hover{
     position: relative;
 }
 
+#filter-container{
+    display: flex;
+    flex-direction: column;
+}
+
+.video-card {
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.video-card:hover {
+    transform: scale(1.02);
+}
+
+.thumbnail {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    display: block;
+}
+
+.video-info {
+    padding: 12px;
+    color: #f0f0f0;
+}
+
+.video-title {
+    font-size: 16px;
+    margin: 0 0 6px;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.video-channel {
+    font-size: 14px;
+    color: #bbbbbb;
+    margin: 0 0 4px;
+}
+
+.video-meta {
+    font-size: 12px;
+    color: #888;
+}
+
+.channel-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: black;
+}
+
+.channel-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.channel-picture {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 16px;
+}
+
+.channel-info {
+    flex: 1;
+}
+
+.channel-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.channel-subs {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0;
+}
+
+.channel-description {
+    font-size: 14px;
+    color: #444;
+}
+
+
 @media (max-width: 768px) {
     #video-container{
         width: 90%;

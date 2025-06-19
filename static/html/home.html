@@ -15,6 +15,19 @@
         <h2 id="web-title">StreamingWeb</h2>
         <input type="text" name="search" id="search-input">
         <i class="bi bi-search" id="search-button"></i>
+        <div id="filter-container">
+            <select id="content-type">
+                <option value="videos">Videos</option>
+                <option value="channels">Channels</option>
+            </select>
+                <select id="content-filter">
+                <option value="recent">Recent</option>
+                <option value="oldest">Oldest</option>
+                <option value="popular">Popular</option>
+                <option value="relevance">Relevance</option>
+            </select>
+        </div>
+
         <div id="profile-picture">
             <div class="dropdown" id="profile-dropdown">
                 <a id="dashboard">Dashboard</a>
@@ -24,8 +37,6 @@
             </div>
         </div>
     </nav>
-    <div class="videos-container">
-        <div class="video-card"></div>
-    </div>
+    <div id="main-container"></div>
 </body>
 </html>

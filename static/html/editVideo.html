@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamingWeb | Edit Video</title>
+    <link rel="stylesheet" href="static/css/navBar.css">
+    <link rel="stylesheet" href="static/css/editVideo.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="static/js/navBar.js" defer></script>
+    <script src="static/js/editVideo.js" defer></script>
+</head>
+<body>
+    <nav>
+        <h2 id="web-title">StreamingWeb</h2>
+        <input type="text" name="search" id="search-input">
+        <i class="bi bi-search" id="search-button"></i>
+        <div id="profile-picture">
+            <div class="dropdown" id="profile-dropdown">
+                <a id="dashboard">Dashboard</a>
+                <a id="my-profile">My Profile</a>
+                <a id="settings">Settings</a>
+                <a id="log-out">Log Out</a>
+            </div>
+        </div>
+    </nav>
+    <div id="main-container">
+        <h1>Streaming Web Edit</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="title">Title</label>
+            <label for="id">Id</label>
+            <input type="text" name="id" id="id-input" readonly required>
+            <input type="text" name="title" id="title-input" required>
+            <label for="description">Description</label>
+            <textarea name="description" id="description-input" required></textarea>
+            <label for="miniature-input" class="custom-file-upload" id="miniature-input-label">
+                📁 Upload Miniature
+            </label>
+            <input type="file" name="miniature" id="miniature-input" class="file-input" accept="image/jpeg, image/png, image/webp" />
+            <button type="submit">Save</button>
+            <p id="error-message"></p>
+        </form>
+    </div>
+</body>
+</html>

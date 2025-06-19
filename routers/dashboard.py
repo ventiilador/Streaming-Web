@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import RedirectResponse, FileResponse
 from functions import require_authenticated_user, save_upload_file
-from crud import upload_video
+from crud import upload_video, get_videos_by_user_id
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 
@@ -40,21 +40,27 @@ async def post_upload_video(
     if isinstance(data, RedirectResponse):
         return data
     
+    if not 4 <= len(title) <= 24:
+        return {"error": 1}
+    
+    if not 5 <= len(description) <= 400:
+        return {"error": 2}
+    
     user_id = data["user_id"]
 
     if video.content_type not in ALLOWED_VIDEO_TYPES:
-        return {"error": 1}
+        return {"error": 3}
 
     video_bytes = await video.read()
     if len(video_bytes) > MAX_VIDEO_SIZE:
-        return {"error": 2}
+        return {"error": 4}
     await video.seek(0)
 
     if miniature.content_type not in ALLOWED_IMAGE_TYPES:
-        return {"error": 3}
+        return {"error": 5}
     image_bytes = await miniature.read()
     if len(image_bytes) > MAX_IMAGE_SIZE:
-        return {"error": 4}
+        return {"error": 6}
     await miniature.seek(0)
     
     video_extension = os.path.splitext(video.filename)[1]
@@ -65,3 +71,13 @@ async def post_upload_video(
     await save_upload_file(miniature, f"media/miniatures/{video_data.id}{miniature_extension}")
 
     return {"success": "The video has been uploaded successfully!"}
+
+@router.get("/API/my_videos")
+async def get_my_videos(data=Depends(require_authenticated_user()), db: AsyncSession=Depends(get_db)):
+
+    if isinstance(data, RedirectResponse):
+        return data
+    
+    user_id = data["user_id"]
+
+    return await get_videos_by_user_id(db=db, user_id=user_id)

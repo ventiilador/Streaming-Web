@@ -516,7 +516,8 @@ async def subscribe_by_username(db: AsyncSession, user_id: int, username: str):
     return {"Success": "Subscribed successfully"}
 
 async def upload_video(db: AsyncSession, user_id: int, title: str, description: str, video_extension: str, miniature_extension: str) -> Video:
-    new_video = Video(title=title, description=description, video_extension=video_extension, miniature_extension=miniature_extension, owner_id=user_id)
+    new_video = Video(title=title, description=description, video_extension=video_extension,
+                       miniature_extension=miniature_extension, owner_id=user_id, upload_date=datetime.now())
     db.add(new_video)
     try:
         await db.commit()
@@ -533,3 +534,107 @@ async def get_miniature_extension_by_video_id(db: AsyncSession, video_id: int):
     if video:
         return video.miniature_extension
     return False
+
+async def get_videos_by_user_id(db: AsyncSession, user_id: int):
+    videos_result = await db.execute(select(Video).where(Video.owner_id == user_id))
+    videos = videos_result.scalars().all()
+
+    if videos:
+        return {"videos": videos}
+    return {"error": "No videos found"}
+
+async def check_if_user_is_video_owner_by_id(db: AsyncSession, user_id: int, video_id: int):
+    video_result = await db.execute(select(Video).where(Video.id == video_id))
+    video = video_result.scalars().first()
+
+    if video.owner_id == user_id:
+        return True
+    return False
+
+async def edit_video(db: AsyncSession, user_id: int, video_id: int, title: str, description: str, miniature_extension: str):
+    video_result = await db.execute(select(Video).where(Video.id == video_id))
+    video = video_result.scalars().first()
+
+    if not video.owner_id == user_id:
+        return False
+    
+    if miniature_extension:
+        await db.execute(update(Video).where(Video.id == video_id)
+            .values(title=title, description=description, miniature_extension=miniature_extension)
+        )
+    else:
+        await db.execute(update(Video).where(Video.id == video_id)
+            .values(title=title, description=description)
+        )
+    await db.commit()
+    return True
+
+async def get_profile_data_by_id(db: AsyncSession, user_id: int):
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalars().first()
+
+    if user:
+        return {"username": user.username, "biography": user.biography, "user_id": user.id}
+    
+    return {"error": "user not found"}
+
+async def update_profile_by_id(db: AsyncSession, user_id: int, username: str, biography: str, profile_extension: str):
+    result = await db.execute(select(User).where(User.username == username))
+    user_with_same_username = result.scalars().first()
+
+    if not user_with_same_username:
+        await db.execute(update(User).where(User.id == user_id).values(username=username))
+
+    await db.execute(update(User).where(User.id == user_id).values(biography=biography))
+
+    if profile_extension:
+        await db.execute(update(User).where(User.id == user_id).values(profile_extension=profile_extension))
+
+    await db.commit()
+    return {"success": "profile updated successfully"}
+
+async def get_user_profile_extension(db: AsyncSession, user_id: int):
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    return user.profile_extension
+
+from sqlalchemy.orm import selectinload
+
+async def search_videos(db: AsyncSession, search: str, filter: str, offset: int, limit: int = 20):
+    query = select(Video).where(Video.title.ilike(f"%{search}%"))
+
+    if filter == "recent":
+        query = query.order_by(desc(Video.upload_date))
+    elif filter == "oldest":
+        query = query.order_by(asc(Video.upload_date))
+    elif filter == "popular":
+        query = query.order_by(desc(Video.views))
+    elif filter == "relevance":
+        pass
+
+    query = query.options(selectinload(Video.owner))
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
+    videos = result.scalars().all()
+
+    return [
+    {
+        "id": video.id,
+        "title": video.title,
+        "views": video.views,
+        "upload_date": video.upload_date.isoformat(),
+        "owner": video.owner.username,
+    }
+    for video in videos
+    ]
+
+async def search_channels(db: AsyncSession, search: str, filter: str, offset: int, limit: int = 20):
+    query = select(User).where(User.username.ilike(f"%{search}%"))
+
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
+    channels = result.scalars().all()
+
+    return channels

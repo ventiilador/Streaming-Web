@@ -19,19 +19,12 @@ def get_login(redirect=Depends(redirect_if_authenticated())):
 
 @router.post("/login")
 async def post_login(
-    username: str = Form(...),
-    password: str = Form(...),
+    form: LoginForm = Depends(LoginForm.as_form),
     db: AsyncSession = Depends(get_db),
     redirect=Depends(redirect_if_authenticated())):
 
     if isinstance(redirect, RedirectResponse):
         return redirect
-    
-    try:
-        form = LoginForm(username=username, password=password)
-    except ValueError as e:
-        print(e)
-        return RedirectResponse("/login?error=1", status_code=302)
     
     user = await login(db=db, username=form.username, password=form.password)
 

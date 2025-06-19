@@ -4,16 +4,19 @@ const currentOptionContainer = document.getElementById("current-option-container
 // This function shows and manages all the events in the upload video form
 const showSubmitVideoOption = () => {
     // Shows the form
+    currentOptionContainer.style.gridTemplateColumns = "1fr 2fr";
     currentOptionContainer.innerHTML = `
         <form method="post" id="video-form">
-            <h2>Submit a Video</h2>
-            <label for="title">Title</label>
-            <input type="text" name="title" id="title-input" required>
-            <label for="description">Description</label>
-            <textarea name="description" id="description-input" required></textarea>
-            <button type="submit" id="submit-video-button">Submit</button>
+            <h2 class="section-titles">Submit a Video</h2>
+            <div id="video-form-container">
+                <label for="title">Title</label>
+                <input class="section-inputs" type="text" name="title" id="title-input" required>
+                <label for="description">Description</label>
+                <textarea class="section-inputs" name="description" id="description-input" required></textarea>
+                <button type="submit" id="submit-video-button">Submit</button>
+            </div>
         </form>
-        <div>
+        <div id="files-container">
             <h3>Video</h3>
             <label for="video-input" class="custom-file-upload" id="video-input-label">
                 📁 Upload Video
@@ -148,15 +151,21 @@ const showSubmitVideoOption = () => {
             // All the errors
             switch(error) {
                 case 1:
-                    errorMessage.innerText = "The video format is incorrect";
+                    errorMessage.innerText = "The Title must be between 4 and 24 chars";
                     break;
                 case 2:
-                    errorMessage.innerText = "The video cannot weigh more than 10GB";
+                    errorMessage.innerText = "The Description must be between 5 and 400 chars";
                     break;
                 case 3:
-                    errorMessage.innerText = "The miniature format is incorrect";
+                    errorMessage.innerText = "The video format is incorrect";
                     break;
                 case 4:
+                    errorMessage.innerText = "The video cannot weigh more than 10GB";
+                    break;
+                case 5:
+                    errorMessage.innerText = "The miniature format is incorrect";
+                    break;
+                case 6:
                     errorMessage.innerText = "The miniature cannot weigh more than 200MB";
                     break;
                 default:
@@ -172,12 +181,71 @@ const showSubmitVideoOption = () => {
     });
 };
 
+const showManageVideosOption = () => {
+    currentOptionContainer.style.gridTemplateColumns = "1fr";
+    let html = `
+    <h2>My videos</h2>
+    `;
+    
+    fetch("/API/my_videos", {
+        method: "GET",
+        credentials: "include",
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error("Error fetching my videos");
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.error) {
+            html += "<h3>You dont have videos yet.</h3>";
+        } else {
+            data.videos.forEach((video) => {
+                html += `
+                <div class="video-card">
+                    <div class="miniature" style="background-image: url('/video_miniature/${video.id}');"></div>
+
+                    <div class="video-info">
+                    <p class="video-title">${video.title}</p>
+                    <p class="video-description">${video.description}</p>
+                    </div>
+
+                    <div class="video-stats">
+                    <p>👍 ${video.likes}</p>
+                    <p>👎 ${video.dislikes}</p>
+                    <p>👁️ ${video.views ?? 0}</p>
+                    </div>
+
+                    <i class="bi bi-pencil edit-icon" data-id="${video.id}" title="Editar video"></i>
+                </div>
+                `;
+            });
+        }
+        currentOptionContainer.innerHTML = html;
+    })
+    .catch(err => console.log(err));
+};
+
 // Here we manage the different clicks in the options dial
 document.getElementById("options-dial").addEventListener("click", (e) => {
-    if (e.target.id === "submit-video-option") {
-        showSubmitVideoOption();
+    switch(e.target.id){
+        case "submit-video-option":
+            showSubmitVideoOption();
+            break;
+        case "manage-video-option":
+            showManageVideosOption();
+            break;
     }
+
 });
+
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("edit-icon")) {
+        window.location.href = `/edit_video?id=${e.target.dataset.id}`;
+    }
+})
+
 
 // This function transform the urlimage to an normal image
 function dataURLtoBlob(dataURL) {

@@ -19,22 +19,14 @@ def get_register(redirect=Depends(redirect_if_authenticated())):
 
 @router.post("/register")
 async def register_login(
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
+    form: RegisterForm = Depends(RegisterForm.as_form),
     db: AsyncSession = Depends(get_db),
     redirect=Depends(redirect_if_authenticated())):
     
     if isinstance(redirect, RedirectResponse):
         return redirect
     
-    try:
-        form = RegisterForm(username=username, email=email, password=password)
-    except ValueError as e:
-        print(e)
-        return RedirectResponse("/register?error=1", status_code=302)
-    
-    newuser = await register(db=db, username=form.username, email=email, password=form.password)
+    newuser = await register(db=db, username=form.username, email=form.email, password=form.password)
 
     if newuser:
         token = create_access_token(user_id=newuser.id)

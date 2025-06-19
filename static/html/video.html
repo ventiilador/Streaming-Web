@@ -17,6 +17,19 @@
         <h2 id="web-title">StreamingWeb</h2>
         <input type="text" name="search" id="search-input">
         <i class="bi bi-search" id="search-button"></i>
+        <div id="filter-container">
+            <select id="content-type">
+                <option value="videos">Videos</option>
+                <option value="channels">Channels</option>
+            </select>
+                <select id="content-filter">
+                <option value="recent">Recent</option>
+                <option value="oldest">Oldest</option>
+                <option value="popular">Popular</option>
+                <option value="relevance">Relevance</option>
+            </select>
+        </div>
+
         <div id="profile-picture">
             <div class="dropdown" id="profile-dropdown">
                 <a id="dashboard">Dashboard</a>
@@ -26,36 +39,38 @@
             </div>
         </div>
     </nav>
-    <div id="video-container">
-        <video id="video" src="" controls autoplay></video>
-        <div id="title-container">
-            <p id="video-title"></p>
-            <i class="bi bi-hand-thumbs-up" id="video-like-button"></i>
-            <i class="bi bi-hand-thumbs-down" id="video-dislike-button"></i>
-        </div>
-        <div id="channel-box">
-            <div id="channel-image"></div>
-            <p id="channel-name"></p>
-            <button id="subscribe-button">Subscribe</button>
-        </div>
-        <div id="description-box">
-            <p id="description-title">Description</p>
-            <p id="description"></p>
-        </div>
-        <div id="comment-filter-container">
-            <p>Filter comments by:</p>
-            <select name="filter" id="filter-combobox">
-                <option value="relevant" id="relevant">Relevant</option>
-                <option value="recent" id="recent">Recent</option>
-                <option value="old" id="old">Old</option>
-            </select>
-        </div>
-        <div id="comments-box">
-            <p id="comments-title">Comments</p>
-            <div id="comment-input-box">
-                <div id="comment-input-profile-image"></div>
-                <textarea name="comment" id="comment-input" placeholder="Give your opinion" rows="3" style="resize: vertical;"></textarea>
-                <button id="comment-send">Send</button>
+    <div id="main-container">
+        <div id="video-container">
+            <video id="video" src="" controls autoplay></video>
+            <div id="title-container">
+                <p id="video-title"></p>
+                <i class="bi bi-hand-thumbs-up" id="video-like-button"></i>
+                <i class="bi bi-hand-thumbs-down" id="video-dislike-button"></i>
+            </div>
+            <div id="channel-box">
+                <div id="channel-image"></div>
+                <p id="channel-name"></p>
+                <button id="subscribe-button">Subscribe</button>
+            </div>
+            <div id="description-box">
+                <p id="description-title">Description</p>
+                <p id="description"></p>
+            </div>
+            <div id="comment-filter-container">
+                <p>Filter comments by:</p>
+                <select name="filter" id="filter-combobox">
+                    <option value="relevant" id="relevant">Relevant</option>
+                    <option value="recent" id="recent">Recent</option>
+                    <option value="old" id="old">Old</option>
+                </select>
+            </div>
+            <div id="comments-box">
+                <p id="comments-title">Comments</p>
+                <div id="comment-input-box">
+                    <div id="comment-input-profile-image"></div>
+                    <textarea name="comment" id="comment-input" placeholder="Give your opinion" rows="3" style="resize: vertical;"></textarea>
+                    <button id="comment-send">Send</button>
+                </div>
             </div>
         </div>
     </div>

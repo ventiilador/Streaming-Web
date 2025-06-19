@@ -1,22 +1,36 @@
 from fastapi import APIRouter, Depends, Request, Response, Header
 from fastapi.responses import FileResponse, RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import get_db
+from crud import get_user_profile_extension
 from functions import require_authenticated_user
 from pathlib import Path as SysPath
 
 router = APIRouter()
 
+EXTENSION_TO_MEDIA_TYPE = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp"
+}
+
 @router.get("/profile_picture/{user_id}")
-def get_profile_picture(user_id: int, redirect=Depends(require_authenticated_user())):
+async def get_profile_picture(user_id: int, redirect=Depends(require_authenticated_user()), db: AsyncSession=Depends(get_db)):
 
     if isinstance(redirect, RedirectResponse):
         return redirect
-    
-    image_path = SysPath(f"media/profiles/{user_id}.jpg")
+
+    extension = await get_user_profile_extension(db=db, user_id=user_id)
+    image_path = SysPath(f"media/profiles/{user_id}{extension}")
 
     if not image_path.exists():
         image_path = SysPath("media/profiles/default.jpg")
-    
-    return FileResponse(image_path, media_type="image/jpeg")
+        media_type = "image/jpeg"
+    else:
+        media_type = EXTENSION_TO_MEDIA_TYPE.get(extension.lower(), "application/octet-stream")
+
+    return FileResponse(image_path, media_type=media_type)
 
 
 @router.get("/video_miniature/{video_id}")
@@ -24,16 +38,31 @@ def get_miniature(video_id: int, redirect=Depends(require_authenticated_user()))
 
     if isinstance(redirect, RedirectResponse):
         return redirect
-    image_path = SysPath(f"media/miniatures/{video_id}.jpg")
-
-    if image_path.exists():
-        # ARREGLAR LO DE DIFERENTES EXTENSIONES EN EL CODIGO
-        pass
-    else:
-        image_path = SysPath("media/miniatures/default.png")
     
+    allowed_extensions = ["jpg", "jpeg", "png", "webp"]
 
-    return FileResponse(image_path, media_type="image/jpeg")
+    image_path = None
+    found_ext = None
+
+    for ext in allowed_extensions:
+        candidate = SysPath(f"media/miniatures/{video_id}.{ext}")
+        if candidate.exists():
+            image_path = candidate
+            found_ext = ext
+            break
+
+    if not image_path:
+        image_path = SysPath("media/miniatures/default.png")
+        found_ext = "png"
+    
+    mime_types = {
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "webp": "image/webp"
+    }
+
+    return FileResponse(image_path, media_type=mime_types.get(found_ext, "application/octet-stream"))
 
 
 @router.get("/video_stream/{video_id}")
@@ -46,9 +75,34 @@ def stream_video(
     if isinstance(redirect, RedirectResponse):
         return redirect
 
-    video_path = SysPath(f"media/videos/{video_id}.mp4")
+    ALLOWED_VIDEO_TYPES = {
+        "video/mp4", "video/quicktime", "video/x-matroska",
+        "video/x-msvideo", "video/webm"
+    }
+    mime_to_extensions = {
+        "video/mp4": ["mp4"],
+        "video/quicktime": ["mov"],
+        "video/x-matroska": ["mkv"],
+        "video/x-msvideo": ["avi"],
+        "video/webm": ["webm"]
+    }
 
-    if not video_path.exists():
+    video_path = None
+    found_ext = None
+    found_mime = None
+
+    for mime_type in ALLOWED_VIDEO_TYPES:
+        for ext in mime_to_extensions[mime_type]:
+            candidate = SysPath(f"media/videos/{video_id}.{ext}")
+            if candidate.exists():
+                video_path = candidate
+                found_ext = ext
+                found_mime = mime_type
+                break
+        if video_path:
+            break
+
+    if not video_path:
         return Response(status_code=404, content="Video no encontrado")
 
     file_size = video_path.stat().st_size
@@ -73,7 +127,7 @@ def stream_video(
         "Content-Range": f"bytes {start}-{end}/{file_size}",
         "Accept-Ranges": "bytes",
         "Content-Length": str(chunk_size),
-        "Content-Type": "video/mp4",
+        "Content-Type": found_mime or "application/octet-stream",
         "Cache-Control": "no-store"
     }
 

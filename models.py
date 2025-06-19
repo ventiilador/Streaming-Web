@@ -45,6 +45,8 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     subscribers_count = Column(Integer, default=0, server_default="0", nullable=False)
+    biography = Column(String)
+    profile_extension = Column(String)
 
     videos = relationship("Video", back_populates="owner", cascade="all, delete")
     comments = relationship("Comment", back_populates="owner", cascade="all, delete")
@@ -84,6 +86,8 @@ class Video(Base):
     description = Column(String, nullable=True)
     video_extension = Column(String, nullable=False)
     miniature_extension = Column(String, nullable=False)
+    upload_date = Column(DateTime)
+    views = Column(Integer, default=0, server_default="0", nullable=False)
     likes = Column(Integer, default=0, server_default="0", nullable=False)
     dislikes = Column(Integer, default=0, server_default="0", nullable=False)
 
