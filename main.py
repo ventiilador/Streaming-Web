@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from routers import login, register, home, profile, video, default, media, dashboard, editVideo, settings
+from routers import login, register, home, profile, video, default, media, dashboard, editVideo, settings, mail, chat, presence
 
 app = FastAPI()
 
@@ -16,3 +16,6 @@ app.include_router(media.router)
 app.include_router(dashboard.router)
 app.include_router(editVideo.router)
 app.include_router(settings.router)
+app.include_router(mail.router)
+app.include_router(chat.router)
+app.include_router(presence.router)

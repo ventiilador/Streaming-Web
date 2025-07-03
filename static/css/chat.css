@@ -1,0 +1,145 @@
+/* Chat Container */
+#chat-container {
+    max-width: 1400px;
+    margin: 20px auto;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(31, 31, 31);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.7);
+    overflow: hidden;
+}
+
+/* Header: Contact info */
+#chat-header {
+    display: flex;
+    align-items: center;
+    background-color: rgb(22, 22, 22);
+    padding: 15px;
+    border-bottom: 1px solid #444;
+}
+
+#chat-pfp {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+#chat-contact-info h3 {
+    margin: 0;
+    color: #eee;
+}
+
+#chat-contact-info p {
+    margin: 3px 0 0;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+/* Messages Section */
+#chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: rgb(14, 13, 13);
+}
+
+/* Message Bubble */
+.message {
+    max-width: 70%;
+    display: flex;
+    gap: 10px;
+}
+
+.message.sent {
+    margin-left: auto;
+    justify-content: flex-end;
+}
+
+.message.received {
+    justify-content: flex-start;
+}
+
+/* Profile picture in messages */
+.msg-pfp {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+/* Message content */
+.msg-content {
+    background-color: rgb(36, 36, 36);
+    color: #eee;
+    padding: 10px 14px;
+    border-radius: 15px;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+/* Different color for sent messages */
+.message.sent .msg-content {
+    background-color: #4a90e2;
+    color: white;
+}
+
+/* Timestamp */
+.msg-time {
+    display: block;
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* Input footer */
+#chat-input-container {
+    display: flex;
+    border-top: 1px solid #444;
+    background-color: rgb(22, 22, 22);
+    padding: 10px 15px;
+    gap: 10px;
+}
+
+#chat-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: none;
+    background-color: rgb(36, 36, 36);
+    color: #eee;
+    font-size: 1rem;
+    outline: none;
+}
+
+#send-button {
+    background-color: #4a90e2;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+#send-button:hover {
+    background-color: #357ABD;
+}

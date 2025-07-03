@@ -1,9 +1,27 @@
-// we call this module to load the nav data
 let query = "";
 let searchOffset = 0;
 let isLoadingSearch = false;
-let searchEnded = false
+let searchEnded = false;
+let currentView = "";
 const mainContainer = document.getElementById("main-container");
+
+setInterval(() => {
+    fetch("/update_presence", {
+        method: "POST",
+        credentials: "include"
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error("Error trying to update your presence");
+        }
+        return res.json();
+    })
+    .then(data => {
+        console.log(data);
+    })
+    .catch(err => alert(err));
+}, 1000);
+
 
 let username;
 fetch("/API/home", {
@@ -18,7 +36,7 @@ fetch("/API/home", {
 })
 .then(data => {
     document.getElementById("profile-picture").style.backgroundImage = `url(/profile_picture/${data.user_id})`;
-    username = data.username
+    username = data.username;
 })
 .catch(err => alert(err));
 
@@ -26,6 +44,8 @@ const dropdown = document.getElementById("profile-dropdown");
 
 const search = () => {
     isLoadingSearch = true;
+    query = document.getElementById("search-input").value.trim();
+
     let formData = new FormData();
     formData.append("search", query);
     formData.append("filter", document.getElementById("content-filter").value);
@@ -88,15 +108,17 @@ const search = () => {
     });
 };
 
-
 document.addEventListener("click", (e) => {
-    switch(e.target.id) {
+    switch (e.target.id) {
         case "web-title":
             window.location.href = "/home";
             break;
         case "search-button":
-            query = document.getElementById("search-input").value;
+            currentView = "search";
+            query = document.getElementById("search-input").value.trim();
             mainContainer.innerHTML = "";
+            searchOffset = 0;
+            searchEnded = false;
             Object.assign(mainContainer.style, {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
@@ -109,12 +131,15 @@ document.addEventListener("click", (e) => {
             dropdown.classList.toggle("dropdown-active");
             break;
         case "dashboard":
+            currentView = "dashboard"; // ⬅️ CAMBIA VISTA
             window.location.href = "/dashboard";
             break;
         case "my-profile":
+            currentView = "profile";
             window.location.href = `/profile?user=${username}`;
             break;
         case "settings":
+            currentView = "settings";
             window.location.href = "/settings";
             break;
         case "log-out":
@@ -123,7 +148,8 @@ document.addEventListener("click", (e) => {
         default:
             dropdown.classList.remove("dropdown-active");
             break;
-    };
+    }
+
     const videoCard = e.target.closest(".video-card");
     if (videoCard) {
         window.location.href = `/video?id=${videoCard.dataset.id}`;
@@ -135,6 +161,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("content-filter").addEventListener("change", () => {
+    currentView = "search";
     mainContainer.innerHTML = "";
     searchOffset = 0;
     searchEnded = false;
@@ -142,6 +169,7 @@ document.getElementById("content-filter").addEventListener("change", () => {
 });
 
 document.getElementById("content-type").addEventListener("change", () => {
+    currentView = "search";
     mainContainer.innerHTML = "";
     searchOffset = 0;
     searchEnded = false;
@@ -149,6 +177,8 @@ document.getElementById("content-type").addEventListener("change", () => {
 });
 
 window.addEventListener("scroll", () => {
+    if (currentView !== "search") return; // ⬅️ SOLO LLAMA SEARCH EN MODO BÚSQUEDA
+
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const pageHeight = document.documentElement.scrollHeight;
     const windowHeight = window.innerHeight;

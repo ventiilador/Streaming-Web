@@ -22,19 +22,29 @@ const get_profile_data = () => {
     .then(data => {
         document.getElementById("user-image").style.backgroundImage = `url(profile_picture/${data.user.id})`;
         document.getElementById("username").innerText = data.user.username;
-        document.getElementById("subscribers").innerText = `${data.user.subscribers} Subs`
-        document.getElementById("videos-container").innerHTML = ""
-        data.videos.forEach((video) => {
-            document.getElementById("videos-container").innerHTML += `
-            <div class="video-card" data-id="${video.id}" style="background-image: url(/video_miniature/${video.id})"><p class="video-card-title">${video.title}</p></div>
-            `
-        });
+        document.getElementById("subscribers").innerText = `${data.user.subscribers} Subs`;
+        document.getElementById("videos-container").innerHTML = "";
+        console.log(data)
+        try{
+            data.videos.forEach((video) => {
+                document.getElementById("videos-container").innerHTML += `
+                <div class="video-card" data-id="${video.id}" style="background-image: url(/video_miniature/${video.id})"><p class="video-card-title">${video.title}</p></div>
+                `
+            });
+        } catch (error) {
+            console.log(error, "There are no videos");
+        }
         if (data.user.subscribed) {
             subscribe_button.innerText = "Subscribed";
             subscribe_button.style.backgroundColor = "#A9B0B3";
         } else {
             subscribe_button.innerText = "Subscribe";
             subscribe_button.style.backgroundColor = "#791F1F";
+        }
+        if (data.user.followup) {
+            console.log("DADWADWDADAW")
+            subscribe_button.innerText = "Waiting...";
+            subscribe_button.style.backgroundColor = "blueviolet";
         }
     })
     .catch(err => {

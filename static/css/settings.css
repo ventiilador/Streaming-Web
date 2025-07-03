@@ -69,3 +69,30 @@ button{
 #delete-account{
     background-color: red;
 }
+
+#error{
+    color: red;
+    display: none;
+}
+
+#change-password-button{
+    max-width: 165px;
+    height: 30px;
+    background-color: rgb(219, 152, 7);
+    border: none;
+    border-radius: 10px;
+    color: white;
+}
+
+#private-account-input{
+    cursor: pointer;
+}
+
+#change-privacity-button{
+    max-width: 165px;
+    height: 30px;
+    background-color: rgb(88, 7, 219);
+    border: none;
+    border-radius: 10px;
+    color: white;
+}

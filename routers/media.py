@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Response, Header
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
-from crud import get_user_profile_extension
+from crud import get_user_profile_extension, stream_video_permission
 from functions import require_authenticated_user
 from pathlib import Path as SysPath
 
@@ -66,14 +66,22 @@ def get_miniature(video_id: int, redirect=Depends(require_authenticated_user()))
 
 
 @router.get("/video_stream/{video_id}")
-def stream_video(
+async def stream_video(
     video_id: int,
     request: Request,
-    redirect=Depends(require_authenticated_user()),
-    range: str = Header(None)
+    data=Depends(require_authenticated_user()),
+    range: str = Header(None),
+    db: AsyncSession = Depends(get_db)
 ):
-    if isinstance(redirect, RedirectResponse):
-        return redirect
+    if isinstance(data, RedirectResponse):
+        return data
+    
+    user_id = data["user_id"]
+
+    allowed = await stream_video_permission(db=db, user_id=user_id, video_id=video_id)
+
+    if not allowed:
+        return {"error": "Not allowed to watch this content"}
 
     ALLOWED_VIDEO_TYPES = {
         "video/mp4", "video/quicktime", "video/x-matroska",

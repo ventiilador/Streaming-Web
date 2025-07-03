@@ -1,6 +1,7 @@
 import os
+import re
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from functions import require_authenticated_user, save_upload_file
 from crud import upload_video, get_videos_by_user_id
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,7 +66,11 @@ async def post_upload_video(
     
     video_extension = os.path.splitext(video.filename)[1]
     miniature_extension = os.path.splitext(miniature.filename)[1]
-    video_data =  await upload_video(db=db, user_id=user_id, title=title, description=description, video_extension=video_extension, miniature_extension=miniature_extension)
+    title_hashtags = re.findall(r"#\w+", title)
+    description_hashtags = re.findall(r"#\w+", description)
+    hashtags = title_hashtags + description_hashtags
+    video_data =  await upload_video(db=db, user_id=user_id, title=title, description=description, video_extension=video_extension, miniature_extension=miniature_extension,
+                                     hashtags=hashtags)
 
     await save_upload_file(video, f"media/videos/{video_data.id}{video_extension}")
     await save_upload_file(miniature, f"media/miniatures/{video_data.id}{miniature_extension}")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Body
 from fastapi.responses import RedirectResponse, FileResponse
-from crud import get_video_data_by_id, comment, get_comments, like_unlike_comment, dislike_undislike_comment, like_unlike_video, dislike_undislike_video, subscribe_by_video
+from crud import adjust_user_preferences_for_video, get_video_data_by_id, comment, get_comments, like_unlike_comment, dislike_undislike_comment, like_unlike_video, dislike_undislike_video, subscribe_by_video
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from schemas import VideoIdForm, CommentForm, GetCommentsForm, LikeComment
@@ -33,7 +33,12 @@ async def post_get_video(
         return data
     
     user_id = data["user_id"]
-    return await get_video_data_by_id(db=db, video_id=video_id.id, user_id=user_id)
+    
+    video_data = await get_video_data_by_id(db=db, video_id=video_id.id, user_id=user_id)
+
+    await adjust_user_preferences_for_video(db=db, user_id=user_id, video_id=video_id.id, liked=False)
+
+    return video_data
 
 @router.post("/API/comment")
 async def post_comment(
@@ -108,7 +113,10 @@ async def post_like_video(
     
     user_id = data["user_id"]
 
+    await adjust_user_preferences_for_video(db=db, user_id=user_id, video_id=video_id.id, liked=True)
+
     return await like_unlike_video(db=db, user_id=user_id, video_id=video_id.id)
+
 
 @router.post("/API/dislike_video")
 async def post_dislike_video(

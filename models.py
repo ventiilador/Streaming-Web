@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Table
+from sqlalchemy import Column, Float, Integer, String, ForeignKey, Boolean, DateTime, Table
+from datetime import datetime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -37,6 +38,14 @@ user_subscriptions = Table(
     Column("channel_id", Integer, ForeignKey("users.id"), primary_key=True)
 )
 
+video_hashtags = Table(
+    "video_hashtags",
+    Base.metadata,
+    Column("video_id", Integer, ForeignKey("videos.id"), primary_key=True),
+    Column("hashtag_id", Integer, ForeignKey("hashtags.id"), primary_key=True)
+)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -47,6 +56,9 @@ class User(Base):
     subscribers_count = Column(Integer, default=0, server_default="0", nullable=False)
     biography = Column(String)
     profile_extension = Column(String)
+    private_account = Column(Boolean, default=False, nullable=False)
+    last_time_active = Column(DateTime)
+    online = Column(Boolean, default=False)
 
     videos = relationship("Video", back_populates="owner", cascade="all, delete")
     comments = relationship("Comment", back_populates="owner", cascade="all, delete")
@@ -78,6 +90,27 @@ class User(Base):
         back_populates="subscriptions"
     )
 
+    preferences = relationship("UserPreference", back_populates="user", cascade="all, delete")
+
+    followed = relationship("FollowUp", foreign_keys="FollowUp.follower_id", back_populates="follower")
+    
+    followers = relationship("FollowUp", foreign_keys="FollowUp.followed_id", back_populates="followed")
+
+    sent_messages = relationship(
+        "PrivateMessage",
+        foreign_keys="PrivateMessage.sender_id",
+        back_populates="sender",
+        cascade="all, delete-orphan"
+    )
+
+    received_messages = relationship(
+        "PrivateMessage",
+        foreign_keys="PrivateMessage.recipient_id",
+        back_populates="recipient",
+        cascade="all, delete-orphan"
+    )
+
+
 class Video(Base):
     __tablename__ = "videos"
 
@@ -102,6 +135,12 @@ class Video(Base):
         back_populates="favorite_videos"
     )
 
+    hashtags = relationship(
+        "Hashtag",
+        secondary=video_hashtags,
+        back_populates="videos"
+    )
+
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -124,3 +163,55 @@ class Comment(Base):
         secondary=user_comment_favorites,
         back_populates="favorite_comments"
     )
+
+
+class Hashtag(Base):
+    __tablename__ = "hashtags"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+
+    videos = relationship(
+        "Video",
+        secondary=video_hashtags,
+        back_populates="hashtags"
+    )
+
+class UserPreference(Base):
+    __tablename__ = "user_preferences"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    hashtag_id = Column(Integer, ForeignKey("hashtags.id"))
+
+    weight = Column(Float, default=1.0) 
+
+    user = relationship("User", back_populates="preferences")
+    hashtag = relationship("Hashtag")
+
+
+class FollowUp(Base):
+    __tablename__ = "follow_up"
+
+    id = Column(Integer, primary_key=True)
+    
+    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    followed_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime)
+
+    follower = relationship("User", foreign_keys=[follower_id], back_populates="followed")
+    followed = relationship("User", foreign_keys=[followed_id], back_populates="followers")
+
+
+class PrivateMessage(Base):
+    __tablename__ = "private_messages"
+
+    id = Column(Integer, primary_key=True)
+    content = Column(String, nullable=False)
+    date = Column(DateTime, nullable=False)
+
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_messages")
+    recipient = relationship("User", foreign_keys=[recipient_id], back_populates="received_messages")

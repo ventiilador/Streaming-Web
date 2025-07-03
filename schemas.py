@@ -182,3 +182,69 @@ class SearchForm(BaseModel):
         offset: int = Form(0),
     ):
         return cls(search=search, filter=filter, type=type, offset=offset)
+    
+class ChangePasswordForm(BaseModel):
+    current_password: str
+    new_password: str
+
+    @classmethod
+    def as_form(
+        cls,
+        current_password: str = Form(...),
+        new_password: str = Form(...)
+    ):
+        return cls(current_password=current_password, new_password=new_password)
+
+    @field_validator("current_password")
+    def validate_current_password(cls, v):
+        if not v:
+            raise ValueError("Current password cannot be empty")
+        if len(v) > 64:
+            raise ValueError("Current password max length: 64")
+        return v
+
+    @field_validator("new_password")
+    def validate_new_password(cls, v):
+        if not v:
+            raise ValueError("New password cannot be empty")
+        if " " in v:
+            raise ValueError("New password cannot have empty spaces")
+        if not 8 <= len(v) <= 64:
+            raise ValueError("New password must be between 8 and 64 characters")
+        return v
+
+class PrivacityChangeRequest(BaseModel):
+    private: bool
+
+class AcceptFollower(BaseModel):
+    id: int
+    follower_id: int
+
+class DenyFollower(BaseModel):
+    id: int
+
+class ChatId(BaseModel):
+    destination_id: int
+    offset: int
+
+class SendMessage(BaseModel):
+    destination_id: int
+    content: str
+
+    @field_validator("content")
+    def content_must_not_be_empty_and_max_500(cls, v):
+        v = v.strip()
+        if len(v) == 0:
+            raise ValueError("content must not be empty")
+        if len(v) > 500:
+            raise ValueError("content must be at most 500 characters")
+        return v
+
+    @field_validator("destination_id")
+    def destination_id_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError("destination_id must be a positive integer")
+        return v
+
+class ContactData(BaseModel):
+    id: int

@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 from fastapi import APIRouter, Body, Depends, File, Form, UploadFile
 from fastapi.responses import RedirectResponse, FileResponse
@@ -69,13 +70,18 @@ async def post_edit_video(
 
     user_id = data["user_id"]
 
+    title_hashtags = re.findall(r"#\w+", form.title)
+    description_hashtags = re.findall(r"#\w+", form.description)
+    hashtags = title_hashtags + description_hashtags
+
     result = await edit_video(
         db=db,
         user_id=user_id,
         video_id=form.id,
         title=form.title,
         description=form.description,
-        miniature_extension=miniature_extension
+        miniature_extension=miniature_extension,
+        hashtags=hashtags
     )
 
     if result:

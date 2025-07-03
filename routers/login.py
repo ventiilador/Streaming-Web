@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Form, Depends
+import itertools
+from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, FileResponse
 from auth import create_access_token
 from schemas import LoginForm

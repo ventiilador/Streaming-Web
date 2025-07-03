@@ -258,3 +258,5 @@ function dataURLtoBlob(dataURL) {
     }
     return new Blob([ab], { type: mimeString });
 }
+
+showSubmitVideoOption();
